@@ -1,5 +1,18 @@
-import React from "react"
-let MainPage = () => {
-    return <h1>MainPage</h1>
-}
-export {MainPage as default}
+import React from "react";
+import Dropdown from 'react-bootstrap/Dropdown';
+import DropdownButton from 'react-bootstrap/DropdownButton';
+
+const MainPage = () => {
+    return (
+        <div>
+            <h1>MainPage</h1>
+            <DropdownButton id="dropdown-basic-button" title="Dropdown button">
+                <Dropdown.Item href="#/action-1">Action</Dropdown.Item>
+                <Dropdown.Item href="#/action-2">Another action</Dropdown.Item>
+                <Dropdown.Item href="#/action-3">Something else</Dropdown.Item>
+            </DropdownButton>
+        </div>
+    );
+};
+
+export default MainPage;
