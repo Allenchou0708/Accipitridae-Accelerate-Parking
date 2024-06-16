@@ -27,6 +27,18 @@ let MainPage = () => {
 
     let [now_location,reviseLocation] = useState([0,0])
 
+    let [search_range,reviseRange] = useState(500)
+
+    let [search_type,reviseType] = useState("car") // car, moto
+
+    let [show_detail,reviseDetail] = useState({
+        "show_bool" : [],
+        "search_path" : [],
+        "search_result" : []
+    })
+
+    let [zoom_level,reviseLevel] = useState(16)
+
     let getKeepAddressList = () => {
         let db_list = ["台中市北區育才街2號","台中市西區自由路一段95號"]
         reviseKeep(db_list)
@@ -102,22 +114,11 @@ let MainPage = () => {
             const b = { latitude: path.ParkingSegmentPosition.PositionLon, longitude: path.ParkingSegmentPosition.PositionLat }
     
             let distence = haversine(a, b) //(in meters)
-
-            // if( index<10){
-            //     console.log(a)
-            //     console.log(b)
-                // console.log({index,distence})
-            // }
-
-            // if(distence < max_distence){
-            //     console.log({index,distence})
-            // }
             
     
             return distence < max_distence
     
         })
-        console.log(search_path)
     
         return search_path
     }
@@ -128,8 +129,6 @@ let MainPage = () => {
             let search_result = []
             search_path.forEach(
                 (path,index)=>{
-                    // console.log(path)
-                    // console.log(path.ParkingSegmentID)
 
                     let path_id = path.ParkingSegmentID
 
@@ -146,8 +145,8 @@ let MainPage = () => {
                         success: function (Data) {
                             // $('#apireponse').text(JSON.stringify(Data));  
                             // console.log("Data")              
-                            console.log(Data);
-                            search_result.append(Data)
+                            // console.log(Data);
+                            search_result.push(Data)
                         },
                         error: function (xhr, textStatus, thrownError) {
                             // console.log('errorStatus:',textStatus);
@@ -158,11 +157,49 @@ let MainPage = () => {
                     
                 }
             )
+
+            let show_bool = []
+            search_result.forEach((result,index)=>{
+
+                // if(index<10){
+                //     console.log(result)
+                // }
+
+                if(result.CurbParkingSegmentAvailabilities.length !== 0){
+                    if(result.CurbParkingSegmentAvailabilities[0].Availabilities.length!==0){
+                        show_bool.push(true)
+                    }else{
+                        show_bool.push(false )
+                    }
+                }else{
+                    show_bool.push(false )
+                }
+            })
+
+            console.log(show_bool)
+            console.log(search_path)
+            console.log(search_result)
+
+            let show_detail = {
+                "show_bool" : show_bool,
+                "search_path" : search_path,
+                "search_result" : search_result
+            }
+
+            reviseDetail(show_detail)
+
+            return show_detail
             
         }
 
-        //search_path
-        //search_result
+    }
+
+    let Draw_now_location = () => {
+
+    }
+
+    let Draw_parking_lot = () => {
+
     }
 
     let ClickSearch = async () => {
@@ -170,7 +207,6 @@ let MainPage = () => {
             let new_coordinate = await GetCoordinate(token,address)
             console.log("in clicksearch = ",new_coordinate)
             let search_path = GetSearchPath()
-            console.log("in clicksearch = ",search_path)
             Search_Parking_Lot(search_path)
         }else{
             alert("You should enter the address")
@@ -227,16 +263,61 @@ let MainPage = () => {
 
         </div>
         <div className={["mt-5"].join(" ")}>
-            <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false}>
+            <MapContainer center={[24.14916970984777, 120.6869877700639]} zoom={zoom_level} scrollWheelZoom={false}>
                 <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                {
+                    now_location[0] !== 0 && now_location[1] !== 0 ? 
+                        <Marker position={[now_location[0],now_location[1]]}>
+                        </Marker> : <span></span>
+
+                }
+                {
+                    show_detail.show_bool.map((bool,index)=>{
+                        if(bool === true){
+                            let position = show_detail.search_path[index].ParkingSegmentPosition
+                            let space_array = show_detail.search_result[index].CurbParkingSegmentAvailabilities[0].Availabilities
+                            let streetName = show_detail.search_result[index].CurbParkingSegmentAvailabilities[0].ParkingSegmentName.Zh_tw
+                            let available_space = 0 
+                            space_array.forEach(
+                                (space_info,index)=>{
+                                    available_space+=space_info.AvailableSpaces
+                                }
+                            )
+                            // if(search_type === "car"){
+                            //     let specific_space = space_array.filter((space_info,index)=>{
+                            //         if(space_info.SpaceType === 1){
+                            //             return true
+                            //         }else{
+                            //             return false
+                            //         } 
+                            //     })
+
+                            //     specific_space[0]
+                            // }else{
+
+                            // }
+
+                            return <Marker position={[position.PositionLat,position.PositionLon]}>
+                                <Popup>
+                                    {streetName} <br /> 剩餘車位 : {available_space} <br /> <button>Dieraction</button>
+                                </Popup>
+                            </Marker>
+                        }
+                        
+                    })
+                }
+
+
             </MapContainer>
         </div>
         <div>
             <Button variant="warning" onClick={()=>{alert(address)}}>Debug</Button>
             <Button variant="warning" onClick={()=>{debug()}}>try api</Button>
+            <Button variant="warning" onClick={()=>{reviseLocation([24.14916970984777, 120.6869877700639])}}>change location</Button>
+            <Button variant="warning" onClick={()=>{reviseLocation([24.14916970984777, 120.6869877700639])}}>change location 2</Button>
             <Button variant="warning" onClick={()=>{console.log(now_location)}}>look location</Button>
             <Button variant="warning" onClick={()=>{GetAuthorizationHeader()}}>GetAuthorizationHeader()</Button>
             <Button variant="warning" onClick={()=>{Search_Parking_Lot(["aaa","bbb","ccc"])}}>Search_Parking_Lot</Button>
@@ -244,3 +325,20 @@ let MainPage = () => {
     </div>
 }
 export {MainPage as default}
+
+// Frontend Revise
+// Type of car
+// now_location_marker color
+
+// Dieraction
+// change Range
+// Touching
+
+// Incorporate All
+// Video
+// PPT
+
+// Intern PPT
+// Read Paper
+// Vision PPT
+// Documentation
