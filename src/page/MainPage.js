@@ -1,6 +1,6 @@
 import React from "react"
 import { useState,useEffect } from "react"
-import { Button,Form,Dropdown,DropdownButton } from "react-bootstrap"
+import { Button,Form,Dropdown,DropdownButton, InputGroup } from "react-bootstrap"
 import { useNavigate } from "react-router"
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
@@ -9,7 +9,7 @@ import $ from 'jquery';
 import path_detail from "../refference/PathDetail"
 import haversine from 'haversine-distance'
 import { type } from "@testing-library/user-event/dist/type"
-
+import { icon } from "leaflet"
 
 
 
@@ -25,9 +25,11 @@ let MainPage = () => {
 
     let [test_state,reviseTest] = useState()
 
-    let [now_location,reviseLocation] = useState([0,0])
+    let [now_location,reviseLocation] = useState([24.14916970984777, 120.6869877700639])
+    let [now_lat, reviseLat] = useState(0)
+    let [now_lon, reviseLon] = useState(0)
 
-    let [search_range,reviseRange] = useState(500)
+    let [search_range,reviseRange] = useState(400)
 
     let [search_type,reviseType] = useState("car") // car, moto
 
@@ -93,7 +95,14 @@ let MainPage = () => {
                     let number_location = new_location.map((content)=>{
                         return parseFloat(content)
                     })
-                    reviseLocation(number_location)   
+                    console.log("in GetCoordinate : ")
+                    console.log(number_location)
+                    reviseLocation(number_location)  
+                    console.log(number_location)
+                    reviseLat(number_location[0]) 
+                    reviseLon(number_location[1]) 
+                    console.log(now_lat)
+                    console.log(now_lon)
                     return number_location
                 },
                 error: function (xhr, textStatus, thrownError) {
@@ -107,7 +116,6 @@ let MainPage = () => {
         console.log("in Get Search Path = ",now_location)
         let lat = now_location[0]
         let lon = now_location[1]
-        let max_distence = 500
         let search_path = path_detail.filter((path,index)=>{
     
             const a = { latitude: lat, longitude: lon }
@@ -116,8 +124,7 @@ let MainPage = () => {
             let distence = haversine(a, b) //(in meters)
             
     
-            return distence < max_distence
-    
+            return distence < search_range
         })
     
         return search_path
@@ -194,18 +201,28 @@ let MainPage = () => {
 
     }
 
-    let Draw_now_location = () => {
-
+    let choose_range = (changed_id) => {
+        switch(changed_id){
+            case 1:
+                reviseRange(200)
+                break
+            case 2:
+                reviseRange(400)
+                break
+            case 3:
+                reviseRange(800)
+                break
+            default:
+                reviseRange(500)
+        }
     }
 
-    let Draw_parking_lot = () => {
-
-    }
-
-    let ClickSearch = async () => {
+    let ClickSearch = () => {
         if(address !== ""){
-            let new_coordinate = await GetCoordinate(token,address)
-            console.log("in clicksearch = ",new_coordinate)
+            GetCoordinate(token,address)
+            console.log("in clicksearch = ", now_location)
+            console.log("in clicksearch = ", now_lat)
+            console.log("in clicksearch = ", now_lon)
             let search_path = GetSearchPath()
             Search_Parking_Lot(search_path)
         }else{
@@ -231,47 +248,70 @@ let MainPage = () => {
     // let 
 
     return <div className={["container","mt-5"].join(" ")}>
-        <div className={["d-flex","justify-content-between"].join(" ")}>
-            <h1>Accipitridae</h1>
-            <Button variant="primary" onClick={()=>{navigate("/login")}}>帳戶登入</Button>{' '}
-        </div>
-        <div className={["mt-5","d-flex","justify-content-between"].join(" ")}>
+        <div className={["d-flex","justify-content-between","align-items-center","mb-5","pb-4","mp_zigzag_line"].join(" ")}>
             <div className={["d-flex"].join(" ")}>
-                <div className={["w-50"].join(" ")}>
-                    <Form.Control type="text" placeholder="請輸入查找車位的地址" value={address} onChange={(e)=>{
-                        reviseAddress(e.target.value)
-                    }} />
-                </div>
-                <Button variant="success" onClick={()=>{ClickSearch()}}>搜尋</Button>
+                <h1 className={["font-effect-shadow-multiple","mp_title_word"].join(" ")}>Accipitridae</h1>
+                <img className={["mp_title_img","ms-4"].join(" ")} src="./eagle.jpg"></img>
             </div>
             
             
-  
-            <div className={["d-flex","justify-content-between"].join(" ")}>
-                
-                <Button variant="success">儲存地點</Button>
-                <DropdownButton title={"常用地點"}>
+            <span className={["mp_white_button","px-5","py-3","mx-1","my-1","mt-3"].join(" ")} onClick={()=>{navigate("/login")}}>帳戶登入</span>
+    
+        
+        </div>
+        <div className="mt-5"> </div>
+        <div className={["mt-5","d-flex","justify-content-between","align-items-center"].join(" ")}>
+            <div className={["d-flex","mp_left_control_wrap","align-items-center"].join(" ")}>
+                <div className={["w-75","mp_control_height"].join(" ")}>
+                    <InputGroup className="mb-3">
+                        <Form.Control type="text" placeholder="請輸入查找車位的地址" value={address} onChange={(e)=>{
+                            reviseAddress(e.target.value)
+                        }} />
+
+                        <DropdownButton className="mp_dark_blue_button" title={"常用地點"}>
                     {
                         keep_address_list.map((address,index)=>{
                             return(
-                                <Dropdown.Item key={index} eventKey={index.toString()}>{address}</Dropdown.Item>
+                                <Dropdown.Item key={index} eventKey={index.toString()} onClick={()=>{reviseAddress(address)}}>{address}</Dropdown.Item>
                             )
                         })
                     }
                 </DropdownButton>
+                    </InputGroup>
+                </div>
+                <Button className={["ms-4","mp_control_height","px-3"]} variant="success" onClick={()=>{ClickSearch()}}>搜尋</Button>
+                
+            </div>
+            
+            
+  
+            <div className={["d-flex","justify-content-between","align-items-center"].join(" ")}>
+
+                <Button variant="warning" className={["me-4","mp_control_height","mp_control_line_height","px-3","mp_save_button"].join(" ")}>儲存地點
+                
+                {/*<span class={["material-symbols-outlined","mp_star_height"].join(" ")}>star</span>*/}
+                </Button>
+                <DropdownButton id="dropdown-basic-button" className={["mp_control_height"].join(" ")} title={"搜尋半徑 : "+search_range+" m  "}>
+                    <Dropdown.Item href="#/action-1" onClick={ () => {choose_range(1)}}>200 m</Dropdown.Item>
+                    <Dropdown.Item href="#/action-2" onClick={ () => {choose_range(2)}}>400 m</Dropdown.Item>
+                    <Dropdown.Item href="#/action-3" onClick={ () => {choose_range(3)}}>800 m</Dropdown.Item>
+                </DropdownButton>
+                
+                
+                
             </div>
 
         </div>
         <div className={["mt-5"].join(" ")}>
-            <MapContainer center={[24.14916970984777, 120.6869877700639]} zoom={zoom_level} scrollWheelZoom={false}>
+            <MapContainer center={now_location} zoom={zoom_level} scrollWheelZoom={false}>
                 <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 {
-                    now_location[0] !== 0 && now_location[1] !== 0 ? 
-                        <Marker position={[now_location[0],now_location[1]]}>
-                        </Marker> : <span></span>
+                    // now_location[0] !== 0 && now_location[1] !== 0 ? 
+                        <Marker position={[now_location[0],now_location[1]] } >
+                        </Marker>
 
                 }
                 {
@@ -300,7 +340,7 @@ let MainPage = () => {
 
                             // }
 
-                            return <Marker position={[position.PositionLat,position.PositionLon]}>
+                            return <Marker position={[position.PositionLat,position.PositionLon]} opacity={0.7}>
                                 <Popup>
                                     {streetName} <br /> 剩餘車位 : {available_space} <br /> <button>Dieraction</button>
                                 </Popup>
@@ -317,7 +357,7 @@ let MainPage = () => {
             <Button variant="warning" onClick={()=>{alert(address)}}>Debug</Button>
             <Button variant="warning" onClick={()=>{debug()}}>try api</Button>
             <Button variant="warning" onClick={()=>{reviseLocation([24.14916970984777, 120.6869877700639])}}>change location</Button>
-            <Button variant="warning" onClick={()=>{reviseLocation([24.14916970984777, 120.6869877700639])}}>change location 2</Button>
+            <Button variant="warning" onClick={()=>{reviseLocation([24.13589470057062, 120.6773753686955])}}>change location 2</Button>
             <Button variant="warning" onClick={()=>{console.log(now_location)}}>look location</Button>
             <Button variant="warning" onClick={()=>{GetAuthorizationHeader()}}>GetAuthorizationHeader()</Button>
             <Button variant="warning" onClick={()=>{Search_Parking_Lot(["aaa","bbb","ccc"])}}>Search_Parking_Lot</Button>
@@ -328,10 +368,8 @@ export {MainPage as default}
 
 // Frontend Revise
 // Type of car
-// now_location_marker color
 
 // Dieraction
-// change Range
 // Touching
 
 // Incorporate All

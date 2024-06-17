@@ -2,3 +2,63 @@
     height: 70vh;
     width: 100wh;
 }
+
+.mp_title_word {
+    font-weight: bolder;
+    font-size: 7vh
+}
+
+.mp_title_img{
+    height: 9vh;
+}
+
+.mp_white_button{
+    border: 5px double black;
+    background-color: white;
+    display: inline-block;
+    height: 5vh;
+    line-height: 0.7vh;
+    
+}
+
+.mp_white_button:hover{
+    background-color: rgb(224, 224, 224);
+    cursor: pointer;
+}
+
+.mp_zigzag_line{
+    border-bottom: double #3a7f86 3px;
+}
+
+.debug_bg_red{
+    background: red;
+}
+
+.mp_left_control_wrap{
+    width: 60%;
+}
+
+.mp_control_height{
+    height: 5vh;
+}
+
+.mp_control_line_height{
+    line-height: 2.2vh;
+}
+
+.mp_star_height{
+    line-height: 2.5vh;
+}
+
+.mp_dark_blue_button{
+    background-color: #3a7f86;
+}
+
+.mp_save_button{
+    font-weight: bold;
+
+}
+
+.mp_input_box{
+    width: 55%;
+}
