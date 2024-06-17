@@ -12,7 +12,7 @@ import { type } from "@testing-library/user-event/dist/type"
 import { icon } from "leaflet"
 
 import { firestore } from "../firebase";
-import { doc, addDoc, collection, getDocs, serverTimestamp, deleteDoc, query, where } from "@firebase/firestore";
+import { doc, addDoc, collection, getDocs, serverTimestamp, deleteDoc, query, where, updateDoc } from "@firebase/firestore";
 
 
 let MainPage = () => {
@@ -49,21 +49,34 @@ let MainPage = () => {
     const [addresses, setAddresses] = useState([]);
     const [searchAddress, setSearchAddress] = useState("");
     const [searchResult, setSearchResult] = useState("");
+    const [searchDoc, setSearchDoc] = useState("");
 
     const addAddress = async (e) => {
         e.preventDefault();
-        try {
-            const docRef = await addDoc(collection(firestore, "addresses"), {
-                name: s_address,
-                timestamp: serverTimestamp(),
-                test_list: [1,23,456]
-            });
-            console.log("Document written with ID: ", docRef.id);
-            fetchAddress(); // 更新地址清單
-        } catch (e) {
-            console.error("Error adding document: ", e);
+
+        let initial = await searchAddressBool()
+
+        if(initial === false){
+            try {
+                console.log("hi")
+                const docRef = await addDoc(collection(firestore, "addresses"), {
+                    name: common_user,
+                    timestamp: serverTimestamp(),
+                    address_list: [address]
+                });
+                console.log("Document written with ID: ", docRef.id);
+                fetchAddress(); // 更新地址清單
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        }else{
+            console.log("bye")
+            searchAddressID()
+            fetchAddress()
         }
+        
     }
+    
 
     const deleteAddress = async (id) => {
         try {
@@ -92,6 +105,56 @@ let MainPage = () => {
         }
     }
 
+    const searchAddressID = async () => {
+        try {
+            const q = query(collection(firestore, "addresses"), where("name", "==", common_user));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return null
+            } else {
+                console.log("search true")
+                var doc = null
+                querySnapshot.forEach((qdoc,index) => {
+                    doc = qdoc
+                    console.log(doc.id)             
+                });
+
+                console.log(doc.id)
+                console.log(doc.data().address_list)
+                console.log(doc.data().name)
+
+                let address_id = doc.id
+
+                if(address_id!=null){
+
+                    console.log("not null")
+        
+                    let new_address_list = doc.data().address_list
+                    console.log(new_address_list)
+                    if(new_address_list == null){
+                        console.log("empty address list")
+                        new_address_list = []
+                    }
+
+                    new_address_list.push(address)
+
+                    console.log(new_address_list)
+        
+                    const docRef = doc(firestore, "addresses", address_id);
+        
+                    // 更新 'sing street' 這個 document 裡的 "director"
+                    await updateDoc(docRef, {
+                        address_list : new_address_list
+                    });
+                }
+
+                // return 55
+            }
+        } catch (e) {
+            return null
+        }
+    }
+
     const searchAddressBool = async () => {
         try {
             const q = query(collection(firestore, "addresses"), where("name", "==", common_user));
@@ -106,13 +169,14 @@ let MainPage = () => {
             return false
         }
     }
+    
 
     const fetchAddress = async () => {
         try {
             const querySnapshot = await getDocs(collection(firestore, "addresses"));
             const newData = querySnapshot.docs.map((doc) => {
-                console.log(doc.data().test_list)
-                return { id: doc.id, name: doc.data().name }
+                console.log(doc)
+                return { id: doc.id, name: doc.data().name, address_list: doc.data().address_list }
             });
             setAddresses(newData);
         } catch (e) {
@@ -499,7 +563,7 @@ let MainPage = () => {
                     <ul>
                         {addresses.map(item => (
                             <li key={item.id}>
-                                {item.name}
+                                { item.id + " & " + item.name + " & " + item.address_list}
                                 <button onClick={() => deleteAddress(item.id)}>刪除</button>
                             </li>
                         ))}
