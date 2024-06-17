@@ -28,6 +28,8 @@ let MainPage = () => {
     let [test_state,reviseTest] = useState()
 
     let [now_location,reviseLocation] = useState([24.14916970984777, 120.6869877700639])
+    // let [now_location,reviseLocation] = useState([0,0])
+
     let [now_lat, reviseLat] = useState(0)
     let [now_lon, reviseLon] = useState(0)
 
@@ -64,6 +66,8 @@ let MainPage = () => {
                     timestamp: serverTimestamp(),
                     address_list: [address]
                 });
+                reviseKeep([address])
+                
                 console.log("Document written with ID: ", docRef.id);
                 fetchAddress(); // 更新地址清單
             } catch (e) {
@@ -87,6 +91,7 @@ let MainPage = () => {
                     address_list: input_list
                 });
                 console.log("Document written with ID: ", docRef.id);
+                reviseKeep(input_list)
                 fetchAddress(); // 更新地址清單
             } catch (e) {
                 console.error("Error adding document: ", e);
@@ -142,13 +147,17 @@ let MainPage = () => {
 
                 let address_id = doc.id
                 let address_list = doc.data().address_list
-                address_list
+                address_list.push(address)
+
+                console.log(address_list)
 
                 if(address_id!=null){
+                    console.log("1")
                     deleteAddress(address_id)
-                    addAddress_revise()
-                    
-                }
+                    console.log("2")
+                    addAddress_revise(address_list)
+                    console.log("3")
+                }   
 
                 // return 55
             }
@@ -189,9 +198,30 @@ let MainPage = () => {
 
 
 
-    let getKeepAddressList = () => {
-        let db_list = ["台中市北區育才街2號","台中市西區自由路一段95號"]
-        reviseKeep(db_list)
+    let getKeepAddressList = async () => {
+        try {
+            const q = query(collection(firestore, "addresses"), where("name", "==", common_user));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return null
+            } else {
+                console.log("search true")
+                var doc = null
+                querySnapshot.forEach((qdoc,index) => {
+                    doc = qdoc
+                    console.log(doc.id)             
+                });
+
+                console.log(doc.id)
+                console.log(doc.data().address_list)
+                console.log(doc.data().name)
+
+                reviseKeep(doc.data().address_list)
+                
+            }
+        } catch (e) {
+            return null
+        }
     } 
 
     let GetAuthorizationHeader = () => {    
@@ -367,6 +397,7 @@ let MainPage = () => {
 
     let ClickSearch = () => {
         if(address !== ""){
+            GetAuthorizationHeader()
             GetCoordinate(token,address)
             console.log("in clicksearch = ", now_location)
             console.log("in clicksearch = ", now_lat)
@@ -383,7 +414,7 @@ let MainPage = () => {
             alert("You should login first")
         }else{
             if(address !== ""){
-                let a = 123
+                alert("You should enter the address")
             }else{
                 alert("You should enter the address")
             }
@@ -429,7 +460,7 @@ let MainPage = () => {
             <div className={["d-flex","mp_left_control_wrap","align-items-center"].join(" ")}>
                 <div className={["w-75","mp_control_height"].join(" ")}>
                     <InputGroup className="mb-3">
-                        <Form.Control type="text" placeholder="請輸入查找車位的地址" value={address} onChange={(e)=>{
+                        <Form.Control type="text" placeholder="請輸入要查找的地址" value={address} onChange={(e)=>{
                             reviseAddress(e.target.value)
                         }} />
 
@@ -461,7 +492,7 @@ let MainPage = () => {
                     :
                     address === "" ?
                     <Button variant="secondary" className={["me-4","mp_control_height","mp_control_line_height","px-3","disable"].join(" ")} onClick={()=>{ClickStore()}}>儲存地點</Button>
-                    : <Button variant="warning" className={["me-4","mp_control_height","mp_control_line_height","px-3","mp_save_button"].join(" ")} onClick={()=>{ClickStore()}}>儲存地點</Button>
+                    : <Button variant="warning" className={["me-4","mp_control_height","mp_control_line_height","px-3","mp_save_button"].join(" ")} onClick={addAddress}>儲存地點</Button>
 
                 }
                 
@@ -477,18 +508,18 @@ let MainPage = () => {
             </div>
 
         </div>
-        <div className={["mt-5"].join(" ")}>
+        <div className={["mt-5","mb-5"].join(" ")}>
             <MapContainer center={now_location} zoom={zoom_level} scrollWheelZoom={false}>
                 <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {
+                {/*
                     // now_location[0] !== 0 && now_location[1] !== 0 ? 
                         <Marker position={[now_location[0],now_location[1]] } >
                         </Marker>
 
-                }
+                */}
                 {
                     show_detail.show_bool.map((bool,index)=>{
                         if(bool === true){
@@ -517,7 +548,8 @@ let MainPage = () => {
 
                             return <Marker position={[position.PositionLat,position.PositionLon]} opacity={0.7}>
                                 <Popup>
-                                    {streetName} <br /> 剩餘車位 : {available_space} <br /> <button>Dieraction</button>
+                                    {streetName} <br /> 剩餘車位 : {available_space} <br /> 
+                                    {/*<button>Dieraction</button>*/}
                                 </Popup>
                             </Marker>
                         }
@@ -528,7 +560,7 @@ let MainPage = () => {
 
             </MapContainer>
         </div>
-        <div>
+        {/*<div>
             <Button variant="warning" onClick={()=>{alert(address)}}>Debug</Button>
             <Button variant="warning" onClick={()=>{debug()}}>try api</Button>
             <Button variant="warning" onClick={()=>{reviseLocation([24.14916970984777, 120.6869877700639])}}>change location</Button>
@@ -537,41 +569,7 @@ let MainPage = () => {
             <Button variant="warning" onClick={()=>{GetAuthorizationHeader()}}>GetAuthorizationHeader()</Button>
             <Button variant="warning" onClick={()=>{Search_Parking_Lot(["aaa","bbb","ccc"])}}>Search_Parking_Lot</Button>
             <Button variant="warning" onClick={()=>{console.log(common_user)}}>Check pages</Button>
-        </div>
-        <div>
-                <div>
-                    <input
-                        type="text"
-                        placeholder="地址"
-                        value={s_address}
-                        onChange={(e) => setAddress(e.target.value)}
-                    />
-                    <button onClick={addAddress}>新增</button>
-                </div>
-
-                <div>
-                    <input
-                        type="text"
-                        placeholder="查詢地址"
-                        value={searchAddress}
-                        onChange={(e) => setSearchAddress(e.target.value)}
-                    />
-                    <button onClick={searchAddressFunc}>查詢</button>
-                    {searchResult && <p>{searchResult}</p>}
-                </div>
-
-                <div>
-                    <h2>地址清單</h2>
-                    <ul>
-                        {addresses.map(item => (
-                            <li key={item.id}>
-                                { item.id + " & " + item.name + " & " + item.address_list}
-                                <button onClick={() => deleteAddress(item.id)}>刪除</button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
+        </div>*/}
     </div>
 }
 export {MainPage as default}
