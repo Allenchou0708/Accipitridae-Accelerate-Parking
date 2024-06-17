@@ -1,0 +1,32 @@
+.input_narrate{
+    width: 6vw;
+    display: inline-block;
+}
+
+.login-container{
+    width: 60%;
+}
+
+#create_button{
+    background-color: #3a7f86;
+    width: 100%;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    cursor:pointer;
+    margin-top: 5px;
+}
+
+/* #create_button :hover{
+    background-color: #79bfc7;
+    width: 100%;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    cursor:pointer;
+    margin-top: 5px;
+} */

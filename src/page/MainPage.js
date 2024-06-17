@@ -1,7 +1,7 @@
 import React from "react"
 import { useState,useEffect } from "react"
 import { Button,Form,Dropdown,DropdownButton, InputGroup } from "react-bootstrap"
-import { useNavigate } from "react-router"
+import { useNavigate, useOutletContext } from "react-router"
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import "../style/MainPage.css"
@@ -19,7 +19,7 @@ let MainPage = () => {
 
     const navigate = useNavigate()
 
-    let [address,reviseAddress] = useState("台中市北區育才街2號")
+    let [address,reviseAddress] = useState("")
 
     let [keep_address_list,reviseKeep] = useState([])
 
@@ -41,6 +41,8 @@ let MainPage = () => {
         "search_result" : []
     })
 
+    let {common_user,reviseCommonUser} = useOutletContext()
+
     let [zoom_level,reviseLevel] = useState(16)
 
     const [s_address, setAddress] = useState("");
@@ -53,7 +55,8 @@ let MainPage = () => {
         try {
             const docRef = await addDoc(collection(firestore, "addresses"), {
                 name: s_address,
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
+                test_list: [1,23,456]
             });
             console.log("Document written with ID: ", docRef.id);
             fetchAddress(); // 更新地址清單
@@ -89,10 +92,28 @@ let MainPage = () => {
         }
     }
 
+    const searchAddressBool = async () => {
+        try {
+            const q = query(collection(firestore, "addresses"), where("name", "==", common_user));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                return false
+            } else {
+                return true
+            }
+        } catch (e) {
+            console.error("Error searching for document: ", e);
+            return false
+        }
+    }
+
     const fetchAddress = async () => {
         try {
             const querySnapshot = await getDocs(collection(firestore, "addresses"));
-            const newData = querySnapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name }));
+            const newData = querySnapshot.docs.map((doc) => {
+                console.log(doc.data().test_list)
+                return { id: doc.id, name: doc.data().name }
+            });
             setAddresses(newData);
         } catch (e) {
             console.error("Error fetching documents: ", e);
@@ -291,6 +312,19 @@ let MainPage = () => {
         }
     }
 
+    let ClickStore = () => {
+        if(common_user === ""){
+            alert("You should login first")
+        }else{
+            if(address !== ""){
+                let a = 123
+            }else{
+                alert("You should enter the address")
+            }
+        }
+        
+    }
+
     
 
     let debug = () => {
@@ -315,8 +349,12 @@ let MainPage = () => {
                 <img className={["mp_title_img","ms-4"].join(" ")} src="./eagle.jpg"></img>
             </div>
             
-            
-            <span className={["mp_white_button","px-5","py-3","mx-1","my-1","mt-3"].join(" ")} onClick={()=>{navigate("/login")}}>帳戶登入</span>
+            {
+                common_user === "" ? 
+                <span className={["mp_white_button","px-5","py-3","mx-1","my-1","mt-3"].join(" ")} onClick={()=>{navigate("/login")}}>帳戶登入</span>
+                : <span onClick={()=>{navigate("/login")}}>Hi, {common_user}</span>
+
+            }
     
         
         </div>
@@ -340,18 +378,28 @@ let MainPage = () => {
                 </DropdownButton>
                     </InputGroup>
                 </div>
-                <Button className={["ms-4","mp_control_height","px-3"]} variant="success" onClick={()=>{ClickSearch()}}>搜尋</Button>
+                {
+                    address === ""?
+                    <Button className={["ms-4","mp_control_height","px-3","disable"]} variant="secondary" onClick={()=>{ClickSearch()}}>搜尋</Button>
+                    :<Button className={["ms-4","mp_control_height","px-3"]} variant="success" onClick={()=>{ClickSearch()}}>搜尋</Button>
+                }
                 
             </div>
             
             
   
             <div className={["d-flex","justify-content-between","align-items-center"].join(" ")}>
+                {
+                    common_user === ""?
+                    <Button variant="secondary" className={["me-4","mp_control_height","mp_control_line_height","px-3","disable"].join(" ")} onClick={()=>{ClickStore()}}>儲存地點</Button>
+                    :
+                    address === "" ?
+                    <Button variant="secondary" className={["me-4","mp_control_height","mp_control_line_height","px-3","disable"].join(" ")} onClick={()=>{ClickStore()}}>儲存地點</Button>
+                    : <Button variant="warning" className={["me-4","mp_control_height","mp_control_line_height","px-3","mp_save_button"].join(" ")} onClick={()=>{ClickStore()}}>儲存地點</Button>
 
-                <Button variant="warning" className={["me-4","mp_control_height","mp_control_line_height","px-3","mp_save_button"].join(" ")}>儲存地點
+                }
                 
                 {/*<span class={["material-symbols-outlined","mp_star_height"].join(" ")}>star</span>*/}
-                </Button>
                 <DropdownButton id="dropdown-basic-button" className={["mp_control_height"].join(" ")} title={"搜尋半徑 : "+search_range+" m  "}>
                     <Dropdown.Item href="#/action-1" onClick={ () => {choose_range(1)}}>200 m</Dropdown.Item>
                     <Dropdown.Item href="#/action-2" onClick={ () => {choose_range(2)}}>400 m</Dropdown.Item>
@@ -422,6 +470,7 @@ let MainPage = () => {
             <Button variant="warning" onClick={()=>{console.log(now_location)}}>look location</Button>
             <Button variant="warning" onClick={()=>{GetAuthorizationHeader()}}>GetAuthorizationHeader()</Button>
             <Button variant="warning" onClick={()=>{Search_Parking_Lot(["aaa","bbb","ccc"])}}>Search_Parking_Lot</Button>
+            <Button variant="warning" onClick={()=>{console.log(common_user)}}>Check pages</Button>
         </div>
         <div>
                 <div>

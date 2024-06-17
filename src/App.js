@@ -4,15 +4,20 @@ import MainPage from "./page/MainPage";
 import EnrollPage from "./page/EnrollPage";
 import LoginPage from "./page/LoginPage";
 import CreateAccountPage from "./page/CreateAccount";
+import NoteContent from "./part/NoteContent";
 
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<MainPage></MainPage>} exact={true} />
-      <Route path="/login" element={<LoginPage></LoginPage>} />
+      <Route element={<NoteContent></NoteContent>}>
+        <Route path="/" element={<MainPage></MainPage>} exact={true} />
+        <Route path="/login" element={<LoginPage></LoginPage>} />
+        <Route path="/create-account" element={<CreateAccountPage></CreateAccountPage>} />
+      </Route>
+      
       <Route path="/enroll" element={<EnrollPage></EnrollPage>} />
-      <Route path="/create-account" element={<CreateAccountPage></CreateAccountPage>} />
+      
     </Routes>
   );
 }
