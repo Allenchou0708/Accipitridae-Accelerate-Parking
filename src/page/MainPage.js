@@ -76,6 +76,23 @@ let MainPage = () => {
         }
         
     }
+
+    const addAddress_revise = async (input_list) => {
+
+            try {
+                console.log("hi")
+                const docRef = await addDoc(collection(firestore, "addresses"), {
+                    name: common_user,
+                    timestamp: serverTimestamp(),
+                    address_list: input_list
+                });
+                console.log("Document written with ID: ", docRef.id);
+                fetchAddress(); // 更新地址清單
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        
+    }
     
 
     const deleteAddress = async (id) => {
@@ -124,28 +141,13 @@ let MainPage = () => {
                 console.log(doc.data().name)
 
                 let address_id = doc.id
+                let address_list = doc.data().address_list
+                address_list
 
                 if(address_id!=null){
-
-                    console.log("not null")
-        
-                    let new_address_list = doc.data().address_list
-                    console.log(new_address_list)
-                    if(new_address_list == null){
-                        console.log("empty address list")
-                        new_address_list = []
-                    }
-
-                    new_address_list.push(address)
-
-                    console.log(new_address_list)
-        
-                    const docRef = doc(firestore, "addresses", address_id);
-        
-                    // 更新 'sing street' 這個 document 裡的 "director"
-                    await updateDoc(docRef, {
-                        address_list : new_address_list
-                    });
+                    deleteAddress(address_id)
+                    addAddress_revise()
+                    
                 }
 
                 // return 55
